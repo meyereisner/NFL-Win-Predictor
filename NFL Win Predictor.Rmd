@@ -1,0 +1,61 @@
+---
+title: "NFL Win Predictor"
+author: "Joshua Eisner"
+date: "07/16/2024"
+---
+
+```{r}
+# Load necessary libraries
+library(readr)
+library(ggplot2)
+
+# Load the dataset
+nfl_data = read.csv("~/NFL Data CSV.csv")
+
+# Display column names to check for exact matches
+print(names(nfl_data))
+
+# Rename columns to ensure there are no issues with spaces or special characters
+names(nfl_data) = make.names(names(nfl_data))
+
+# View the renamed columns
+print(names(nfl_data))
+
+# Convert relevant columns to numeric
+nfl_data$X2023.Season.Wins = as.numeric(nfl_data$X2023.Season.Wins)
+nfl_data$X2023.Metric = as.numeric(nfl_data$X2023.Metric)
+nfl_data$X2024.Metric = as.numeric(nfl_data$X2024.Metric)
+
+# Create the linear model using 2023 data
+model_2023 = lm(X2023.Season.Wins ~ X2023.Metric, data = nfl_data)
+
+# Summary of the model
+summary(model_2023)
+
+# Predicting the wins for the 2024 season using 2024 metric
+nfl_data$Predicted_Wins_2024 = predict(model_2023, newdata = data.frame(X2023.Metric = nfl_data$X2024.Metric))
+
+# Round the predicted wins to 2 decimal places
+nfl_data$Predicted_Wins_2024 = round(nfl_data$Predicted_Wins_2024, 2)
+
+# View the results
+print(nfl_data)
+
+# Plot the data and the regression line using 2023 data
+ggplot(nfl_data, aes(x = X2023.Metric, y = X2023.Season.Wins)) +
+  geom_point(color = "blue", label = "2023 Actual Wins") +  # Scatter plot for 2023
+  geom_smooth(method = "lm", col = "blue") +  # Regression line for 2023
+  geom_point(aes(x = X2024.Metric, y = Predicted_Wins_2024), color = "red", label = "2024 Predicted Wins") +  # Scatter plot for 2024 predictions
+  geom_text(aes(label = Team, x = X2024.Metric, y = Predicted_Wins_2024), vjust = 1, color = "black", size = 3) +  # Labels for 2024 predictions
+  labs(title = "2023 Season Wins vs 2023 Metric with 2024 Predictions",
+       x = "Metric",
+       y = "Wins") +
+  theme_minimal() +
+  scale_color_manual(values = c("blue", "red")) +
+  theme(legend.position = "top")
+
+# Output the predicted wins for each team in 2024 to the console, sorted by Predicted_Wins_2024 in descending order
+predicted_wins = nfl_data[, c("Team", "Predicted_Wins_2024")]
+predicted_wins = predicted_wins[order(-predicted_wins$Predicted_Wins_2024), ]
+print(predicted_wins)
+```
